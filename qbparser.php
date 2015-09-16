@@ -156,6 +156,7 @@
     public function parse_debug($m)       { return $this->parse_element($m,'debug'); }
     public function parse_snippet($m)     { return $this->parse_element($m,'snippet'); }
     public function parse_local($m)       { return $this->parse_element($m,'local'); }
+    public function parse_datae($m)       { return $this->parse_element($m,'datae'); }
 
     /**
      * @description Колбек для preg_replace_callback в обработчике
@@ -232,6 +233,41 @@
             if (!isset($this->_debugTrace[$k])) return "<!-- EMPTY debugtrace/$k -->";
             $v  = $this->_debugTrace[$k];
           }
+          break;
+        case 'datae':
+          if (!isset($this->_data[$k])) return "<!-- EMPTY data/$k -->";
+          if (is_array($this->_data[$k])) {
+            $tpli = '<li><span class="key">[+key+]</span><span class="value">[+value+]</span></li>';
+            if (isset($arguments['chunk']))
+              if ($fn = $this->search('chunk',$arguments['chunk'])) {
+                $tpli = '{{'.$arguments['chunk'].' [+arguments+]}}';
+              }
+            $LK = false;
+            if (isset($arguments['langKeys']))   $LK = self::bool($arguments['langKeys']);
+            $LP = '';
+            if (isset($arguments['langPrefix'])) $LP = $arguments['langPrefix'];
+            $v = '';
+            foreach ($this->_data[$k] as $dataKey => $dataVal) {
+              $DK = $LK ? "[%".(!empty($LP) ? $LP."." : "")."$dataKey%]" : $dataKey;
+              if (is_array($dataVal)) {
+                $_ = array();
+                foreach ($dataVal as $dvKey => $dvVal) $_[] = "&".$dvKey."=`$dvVal`";
+                $_[] = '&'.$k.".datakey=`$DK`";
+                $v.= str_replace(array(
+                  '[+key+]','[+value+]','[+arguments+]'
+                ),array(
+                  $DK,strval($dataVal),implode(' ',$_)
+                ),$tpli);
+              } else {
+                $_ = strval($dataVal);
+                $v.= str_replace(array(
+                  '[+key+]','[+value+]','[+arguments+]'
+                ),array(
+                  $DK,$_,"&key=`$DK` &value=`$_`"
+                ),$tpli);
+              }
+            }
+          } else { $v = strval($this->_data[$k]); }
           break;
         case 'snippet':
           if ($_ = $this->execute($k,$arguments)) {
@@ -460,7 +496,8 @@
           'debug'       => array('\[\^','\^\]'),
           'snippet'     => array('\[\!','\!\]'),
           'local'       => array('\[\+','\+\]'),
-          'language'    => array('\[\%','\%\]')
+          'language'    => array('\[\%','\%\]'),
+          'datae'       => array('\{\!','\!\}')
         );
         self::$_tags = array();
         foreach ($map as $k => $d) {
@@ -551,6 +588,15 @@
         }
       }
       return $retval;
+    }
+
+    /**
+     * @description Булево значение
+     * @param  mixed $v Значение
+     * @return bool
+     */
+    public static function bool($v) {
+      return ((strval($v) === 'true') || ($v === true) || (intval($v) > 0));
     }
   }
 
