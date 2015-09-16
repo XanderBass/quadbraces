@@ -435,9 +435,14 @@
       if (!empty($this->_templatePack)) $_[] = $this->_templatePack;
       $_[] = $sdir;
       $path = QBPARSER_TPL_PATH.implode($DS,$_).$DS.$dname;
-
+      // Ищем общий файл
       $fname = $path."$ename.$ext";
       if (is_file($fname)) $found = $fname;
+      // Ищем файл для конкретного языка
+      if (!empty($this->_language)) {
+        $fname = $path.$this->_language.DIRECTORY_SEPARATOR."$ename.$ext";
+        if (is_file($fname)) $found = $fname;
+      }
 
       return $found;
     }
