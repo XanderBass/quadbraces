@@ -352,12 +352,12 @@
               case 'notempty': $RET = $EMP ? '' : str_replace('[+value+]',"$TRET",$v); break;
               case 'for':
                 $v = intval($v);
-                $start = 0;
+                $start = 1;
                 if ($ms[$c+1][1] == 'start') { $c++; $start = intval($ms[$c][4]); }
                 $splt  = '';
                 if ($ms[$c+1][1] == 'splitter') { $c++; $splt = $ms[$c][4]; }
                 $_R  = array();
-                for ($pos = $start; $pos <= ($start + $v); $pos++) {
+                for ($pos = $start; $pos <= ($v - $start); $pos++) {
                   $tpls = array(
                     array("#\[\+(iterator\.index)((:?\:([\w\-\.]+)((=`([^`]*)`))?)*)\+\]#si",$pos)
                   );
