@@ -395,7 +395,7 @@
                 $_R  = array();
                 for ($pos = $start; $pos <= ($v - $start); $pos++) {
                   $tpls = array(
-                    array("#\[\+(iterator\.index)((:?\:([\w\-\.]+)((=`([^`]*)`))?)*)\+\]#si",$pos)
+                    array("#\[\+(iterator)((:?\:([\w\-\.]+)((=`([^`]*)`))?)*)\+\]#si",$pos)
                   );
                   $_R[] = $this->_iteration($tpls,$RET);
                 }
