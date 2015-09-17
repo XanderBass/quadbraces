@@ -46,6 +46,7 @@
     protected $_arguments    = array();
     protected $_language     = '';
     protected $_dictionary   = array();
+    protected $_level        = -1;
 
     function __construct() {
       self::initTags();
@@ -184,10 +185,10 @@
           $v = strval(constant($k));
           break;
         case 'setting': case 'local': case 'placeholder':
-          $PA = array('setting' => '_settings','local' => '_arguments','placeholder' => '_data');
+          $PA = array('setting' => '_settings','local' => '','placeholder' => '_data');
           $PN = strval($PA[$etype]);
-          $AR = $this->$PN; // Фикс
-          if (!isset($AR[$k])) return "<!-- EMPTY $etype/$k -->";
+          $AR = empty($PN) ? $this->_arguments[$this->_level - 1] : $this->$PN;
+          if (!isset($AR[$k])) return $etype == 'local' ? "" : "<!-- EMPTY $etype/$k -->";
           $v = strval($AR[$k]);
           break;
         case 'language':
@@ -277,10 +278,7 @@
       }
 
       if (isset($m[2])) $v = $this->extensions($v,$m[2]);
-      $this->_arguments = $arguments;
-      if (!in_array($etype,array('snippet')) && is_array($arguments))
-        if (count($arguments) > 0)
-          foreach ($arguments as $phk => $phv) $v = str_replace("[+$phk+]",$phv,$v);
+      $this->_arguments[$this->_level] = $arguments;
       return ($v != '') ? $this->parse($v,$etype,$k) : '';
     }
 
@@ -300,7 +298,6 @@
      * @throws Exception
      */
     public function parse($d='',$elt='',$key='') {
-      static $_level  = -1;
       static $_levels = null;
 
       $P = is_null($_levels) ? 2 : 1;
@@ -309,9 +306,9 @@
       if (empty($O)) return $O;
 
       for ($c = 0; $c < $P; $c++) {
-        $_level++;
-        if ($_level <= self::$_maxLevel) {
-          $_levels[$_level] = array('element' => $elt,'key' => $key);
+        $this->_level++;
+        if ($this->_level <= self::$_maxLevel) {
+          $_levels[$this->_level] = array('element' => $elt,'key' => $key);
           $this->_debugTrace['levels'] = $_levels;
           foreach (self::$_tags as $k => $t) {
             if (method_exists($this,"parse_$k")) {
@@ -320,10 +317,10 @@
             } else { throw new Exception("parser not implemented: $k"); }
           }
         } else { $O = self::sanitize($O); }
-        $_level--;
+        $this->_level--;
       }
 
-      if ($_level == -1) {
+      if ($this->_level == -1) {
         $st = microtime(true) - QBPARSER_STARTTIME;
         $tm = memory_get_usage() - QBPARSER_STARTMEM;
         $ph = array(
