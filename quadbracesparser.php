@@ -57,7 +57,7 @@
     protected $_loadLanguage = true;
 
     protected $_data       = array(); // Переменные
-    protected $_idata      = array(); // Переменные разовой обработки
+    protected $_idata      = null;    // Переменные разовой обработки
     protected $_settings   = array(); // "Настройки"
     protected $_dictionary = array(); // Словарь
     protected $_chunks     = array(); // Чанки
