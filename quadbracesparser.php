@@ -973,7 +973,7 @@
 
       @return : array
     */
-    public static function initTags() { // TODO: tags
+    public static function initTags() {
       if (is_null(self::$_tags)) {
         $map = array(
           'datae'       => array('\{\!','\!\}'),
