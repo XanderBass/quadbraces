@@ -41,6 +41,7 @@
    *
    * @property      float $startTime  стартовое время
    * @property      int   $startRAM   стартовый расход памяти
+   * @property      array $notice     режим нотификации
    */
   class QuadBracesParser {
     protected static $_maxLevel = 32;
@@ -69,6 +70,7 @@
     protected $_startTime  = 0;
     protected $_startRAM   = 0;
     protected $_debug      = array();
+    protected $_notice     = array();
 
     /******** ОБЩИЕ МЕТОДЫ КЛАССА ********/
     function __construct($owner=null) {
@@ -77,6 +79,7 @@
       $this->_startTime = QBPARSER_STARTTIME;
       $this->_startRAM  = QBPARSER_STARTMEM;
       $this->_paths     = array(QBPARSER_TPL_PATH);
+      $this->notice     = 'common';
     }
 
     function __get($n) {
@@ -221,6 +224,30 @@
       return $this->_startRAM;
     }
 
+    /* CLASS:PROPERTY
+      @name        : notice
+      @description : Режим уведомлений
+      @type        : array
+      @mode        : rw
+    */
+    protected function set_notice($v) {
+      static $K = null;
+      if (is_null($K)) $K = array_keys(self::$_tags);
+      if (!is_int($v) && !is_numeric($v)) {
+        switch ($v) {
+          case 'strict': $this->_notice = $K; break;
+          case 'common':
+            $this->_notice = array('datae','table','structure','chunk','string','lib','cms','snippet');
+            break;
+          default:
+            $this->_notice = array();
+            $TMP = is_array($v) ? $v : explode(',',$v);
+            foreach ($TMP as $Ti) if (in_array($Ti,$K)) $this->_notice[] = $Ti;
+        }
+      }
+      return $this->_notice;
+    }
+
     /******** ВНУТРЕННИЕ МЕТОДЫ КЛАССА ********/
     /* CLASS:INTERNAL
       @name        : _iteration
@@ -334,7 +361,10 @@
       $key       = $this->parse__start($m);
       $arguments = $this->_arguments[$this->_level];
       $value     = $this->variable($key);
-      if ($value === false) return "<!-- not found: datae/$key -->";
+      if ($value === false) {
+        if (in_array('datae',$this->_notice)) return "<!-- not found: datae/$key -->";
+        $value = '';
+      }
       if (is_array($value)) {
         $tplt = 'chunk';
         if (isset($arguments['chunkType']))
@@ -382,7 +412,10 @@
       $key       = $this->parse__start($m);
       $arguments = $this->_arguments[$this->_level];
       $value     = $this->variable($key);
-      if ($value === false) return "<!-- not found: table/$key -->";
+      if ($value === false) {
+        if (in_array('table',$this->_notice)) return "<!-- not found: table/$key -->";
+        $value = '';
+      }
       if (is_array($value)) {
         $v = '';
         // Параметры обработки
@@ -471,7 +504,10 @@
       $key       = $this->parse__start($m);
       $arguments = $this->_arguments[$this->_level];
       $value     = $this->variable($key);
-      if ($value === false) return "<!-- not found: structure/$key -->";
+      if ($value === false) {
+        if (in_array('structure',$this->_notice)) return "<!-- not found: structure/$key -->";
+        $value = '';
+      }
       if (is_array($value)) {
         // Параметры обработки
         $FL = isset($arguments['fields']) ? explode(',',$arguments['fields']) : array();
@@ -506,40 +542,55 @@
 
     // ****** Чанки
     public function parse_chunk($m) {
-      $key  = $this->parse__start($m);
-      if ($v = $this->getChunk($key))
-        return $this->parse__finish($m,'chunk',$key,$v);
-      return "<!-- not found: chunk/$key -->";
+      $key = $this->parse__start($m);
+      $v   = $this->getChunk($key);
+      if ($v === false) {
+        if (in_array('chunk',$this->_notice)) return "<!-- not found: chunk/$key -->";
+        $v = '';
+      }
+      return $this->parse__finish($m,'chunk',$key,$v);
     }
 
     // ****** Однострочные библиотеки
     public function parse_string($m) {
-      $key  = $this->parse__start($m);
-      if ($v = $this->getChunk($key,'string'))
-        return $this->parse__finish($m,'chunk',$key,$v);
-      return "<!-- not found: chunk/$key -->";
+      $key = $this->parse__start($m);
+      $v   = $this->getChunk($key,'string');
+      if ($v === false) {
+        if (in_array('string',$this->_notice)) return "<!-- not found: string/$key -->";
+        $v = '';
+      }
+      return $this->parse__finish($m,'string',$key,$v);
     }
 
     // ****** Многострочные библиотеки
     public function parse_lib($m) {
-      $key  = $this->parse__start($m);
-      if ($v = $this->getChunk($key,'lib'))
-        return $this->parse__finish($m,'chunk',$key,$v);
-      return "<!-- not found: chunk/$key -->";
+      $key = $this->parse__start($m);
+      $v   = $this->getChunk($key,'lib');
+      if ($v === false) {
+        if (in_array('lib',$this->_notice)) return "<!-- not found: lib/$key -->";
+        $v = '';
+      }
+      return $this->parse__finish($m,'lib',$key,$v);
     }
 
     // ****** Константы
     public function parse_constant($m) {
       $key = $this->parse__start($m);
-      if (empty($key) || !defined($key)) return "<!-- not found: constant/$key -->";
-      return $this->parse__finish($m,'constant',$key,constant($key));
+      if (empty($key) || !defined($key)) {
+        if (in_array('constant',$this->_notice)) return "<!-- not found: constant/$key -->";
+        $v = '';
+      } else { $v = constant($key); }
+      return $this->parse__finish($m,'constant',$key,$v);
     }
 
     // ****** "Настройки"
     public function parse_setting($m) {
       $key = $this->parse__start($m);
       $val = $this->setting($key);
-      if ($val === false) return "<!-- not found: setting/$key -->";
+      if ($val === false) {
+        if (in_array('setting',$this->_notice)) return "<!-- not found: setting/$key -->";
+        $val = '';
+      }
       return $this->parse__finish($m,'setting',$key,$val);
     }
 
@@ -547,7 +598,10 @@
     public function parse_placeholder($m) {
       $key = $this->parse__start($m);
       $val = $this->variable($key);
-      if ($val === false) return "<!-- not found: placeholder/$key -->";
+      if ($val === false) {
+        if (in_array('placeholder',$this->_notice)) return "<!-- not found: placeholder/$key -->";
+        $val = '';
+      }
       return $this->parse__finish($m,'placeholder',$key,$val);
     }
 
@@ -592,11 +646,26 @@
       }
 
       if (empty($v)) {
-        if (!isset($this->_debug[$key])) return "<!-- not found: debug/$key -->";
-        $v = $this->_debug[$key];
+        if (!isset($this->_debug[$key])) {
+          if (in_array('debug',$this->_notice)) return "<!-- not found: debug/$key -->";
+          $v = '';
+        } else { $v = $this->_debug[$key]; }
       }
 
       return $this->parse__finish($m,'debug',$key,$v);
+    }
+
+    // ****** Колбеки CMS
+    public function parse_cms($m) {
+      $key = $this->parse__start($m);
+      $v = '';
+      if (is_object($this->_owner)) {
+        $M = "parse".ucfirst($key);
+        if (method_exists($this->_owner,$M)) {
+          $v = $this->_owner->$M($this->_arguments[$this->_level]);
+        } else { if (in_array('cms',$this->_notice)) return "<!-- not implemented: cms/$key -->"; }
+      } else { if (in_array('cms',$this->_notice)) return "<!-- not implemented: cms/$key -->"; }
+      return $this->parse__finish($m,'cms',$key,$v);
     }
 
     // ****** Сниппеты
@@ -605,7 +674,10 @@
       $v   = '';
       if ($_ = $this->execute($key,$this->_arguments[$this->_level])) {
         $v  = strval($_);
-      } else { if ($_ === false) return "<!-- not found: snippet/$key -->"; }
+      } else {
+        if (($_ === false) && in_array('snippet',$this->_notice))
+          return "<!-- not found: snippet/$key -->";
+      }
       return $this->parse__finish($m,'snippet',$key,$v);
     }
 
@@ -812,8 +884,8 @@
       @param : string
     */
     public function extensions($value,$ext='') {
-      $RET = trim($value);
-      if (empty($ext)) return $value;
+      $RET = ''.trim($value);
+      if (empty($ext)) return ''.$value;
       if ($_ = preg_match_all('|\:([\w\-\.]+)((\=`([^`]*)`)?)|si',$ext,$ms,PREG_SET_ORDER)) {
         for($c = 0; $c < count($ms); $c++) {
           $a = $ms[$c][1];
@@ -983,9 +1055,11 @@
           'string'      => array('\{\(','\)\}'),
           'lib'         => array('\{\<','\>\}'),
           'constant'    => array('\{\*','\*\}'),
+
           'setting'     => array('\[\(','\)\]'),
           'placeholder' => array('\[\*','\*\]'),
           'debug'       => array('\[\^','\^\]'),
+          'cms'         => array('\[\:','\:\]'),
           'snippet'     => array('\[\!','\!\]'),
           'local'       => array('\[\+','\+\]'),
           'language'    => array('\[\%','\%\]')
@@ -1182,6 +1256,15 @@
       return ((strval($v) === 'true') || ($v === true) || (intval($v) > 0));
     }
 
+    /* CLASS:STATIC
+      @name        : placeholders
+      @description : Простая замена
+
+      @param : $data  | array  | value |        | данные
+      @param : $value | string | value | @EMPTY | Шаблон
+
+      @return : string
+    */
     public static function placeholders($data,$value='') {
       $O = $value;
       foreach ($data as $key => $val) $O = str_replace("[+$key+]",$val,$O);
