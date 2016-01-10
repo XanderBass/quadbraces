@@ -43,7 +43,7 @@
    * @property      int   $startRAM   стартовый расход памяти
    * @property      array $notice     режим нотификации
    */
-  class QuadBracesParser {
+  class QuadBracesParser_v1_1 {
     protected static $_maxLevel = 32;
     protected static $_tags     = null;
     protected static $_prefix   = 'QUADBRACES';
