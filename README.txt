@@ -73,7 +73,24 @@ ul, ol        - превращает многострочное значение
   [+iterator.index+] - номер позиции текущей итерации
   [+iterator+]       - текущий индекс
 
-4. Примеры
+4. Использование
+<?php
+  require 'parser.php';
+
+  $parser = new QuadBracesParser();
+  // Назначаем путь к шаблонным данным
+  $parser->paths    = $_SERVER['DOCUMENT_ROOT'].'content'.DIRECTORY_SEPARATOR.'tpl';
+  // Шаблон должен находиться в %tplpath%/templates/mytemplate.html
+  $parser->template = 'mytemplate';
+  // Устанавливаем данные. Массив, содержащий какие угодно данные. По плейсхолдерам - выше
+  $parser->data = array(
+    'title' => 'Заголовок страницы'
+    'content' => 'Лорем ипсум... =)'
+  );
+  echo $parser->parse();
+?>
+
+5. Примеры синтаксиса
 {{my_chunk}}
   Выведет содержимое файла "my_chunk.html" из папки с шаблонами
 
