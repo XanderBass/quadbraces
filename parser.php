@@ -35,8 +35,6 @@
   /* CLASS ~BEGIN @string : Обработанные данные */
   /**
    * Class QuadBracesParser
-   * @property      mysqli $db
-   *
    * @property      object $owner
    *
    * @property      array $paths

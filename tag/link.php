@@ -8,22 +8,27 @@
     protected $_order  = 9;
 
     public function main(array $m,$key='') {
-      $v = '';
       $R = $this->_owner->resources;
-      if (!is_null($R)) {
-        $_ = array();
-        $I = intval($key);
-        $A = 0;
-        while (isset($R[$I])) {
-          $A[] = $I;
-          $_[] = isset($R[$I]['alias'])  ? $R[$I]['alias']          : $I;
-          $I   = isset($R[$I]['parent']) ? intval($R[$I]['parent']) : 0;
-          if (($I == 0) || (in_array($I,$A))) break;
-        }
-        $v = implode('/',$_);
-        if ($this->_owner->SEOStrict)
-          $v.= isset($this->_owner->idx[$key]) ? '/' : '.html';
+      $I = intval($key);
+      if (empty($I)) return '';
+      if (empty($R[$I])) {
+        $this->owner->invoke('resourceNotFound',$I);
+        return '';
       }
+      $_ = array();
+      $A = array();
+      while (!empty($R[$I]) && ($I != 0)) {
+        $A[] = $I;
+        $_[] = empty($R[$I]['alias'])  ? $R[$I]['alias']          : $I;
+        $I   = empty($R[$I]['parent']) ? intval($R[$I]['parent']) : 0;
+        if (in_array($I,$A)) {
+          $this->owner->invoke('resourceCycled',$I);
+          return '';
+        }
+      }
+      $v = implode('/',$_);
+      if ($this->_owner->SEOStrict)
+        $v.= isset($this->_owner->idx[$key]) ? '/' : '.html';
       return $v;
     }
   }
