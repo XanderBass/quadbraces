@@ -4,6 +4,7 @@
   class QuadBracesTagDebug extends QuadBracesTagPrototype {
     protected $_name   = 'debug';
     protected $_start  = '\[\^';
+    protected $_rstart = '\^';
     protected $_finish = '\^\]';
     protected $_order  = 8;
 

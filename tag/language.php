@@ -4,6 +4,7 @@
   class QuadBracesTagLanguage extends QuadBracesTagPrototype {
     protected $_name   = 'language';
     protected $_start  = '\[\%';
+    protected $_rstart = '\%';
     protected $_finish = '\%\]';
     protected $_order  = 9;
 

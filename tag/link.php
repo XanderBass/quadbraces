@@ -4,6 +4,7 @@
   class QuadBracesTagLink extends QuadBracesTagPrototype {
     protected $_name   = 'link';
     protected $_start  = '\[\~';
+    protected $_rstart = '\~';
     protected $_finish = '\~\]';
     protected $_order  = 9;
 

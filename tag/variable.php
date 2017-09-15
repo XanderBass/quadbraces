@@ -4,6 +4,7 @@
   class QuadBracesTagVariable extends QuadBracesTagPrototype {
     protected $_name   = 'variable';
     protected $_start  = '\[\*';
+    protected $_rstart = '\*';
     protected $_finish = '\*\]';
     protected $_order  = 7;
 

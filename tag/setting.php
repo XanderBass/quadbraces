@@ -4,6 +4,7 @@
   class QuadBracesTagSetting extends QuadBracesTagPrototype {
     protected $_name   = 'setting';
     protected $_start  = '\[\(';
+    protected $_rstart = '\+\+';
     protected $_finish = '\)\]';
     protected $_order  = 6;
 

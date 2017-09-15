@@ -14,6 +14,7 @@
     protected $_owner  = null;
     protected $_error  = false;
     protected $_start  = '';
+    protected $_rstart = '';
     protected $_finish = '';
     protected $_name   = '';
     protected $_order  = 0;
@@ -21,7 +22,7 @@
     function __construct(QuadBracesParser $owner) {
       $this->_owner = $owner;
       if ($this->_owner->MODXRevoMode) {
-        $this->_start  = '\['.$this->_start;
+        $this->_start  = '\[\['.$this->_rstart;
         $this->_finish = '\]\]';
       }
       $this->_owner->registerTag($this);

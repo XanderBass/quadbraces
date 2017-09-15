@@ -4,6 +4,7 @@
   class QuadBracesTagSnippet extends QuadBracesTagPrototype {
     protected $_name   = 'snippet';
     protected $_start  = '\[\!';
+    protected $_rstart = '\!';
     protected $_finish = '\!\]';
     protected $cached = false;
     protected $_order  = 10;

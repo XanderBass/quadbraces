@@ -4,6 +4,7 @@
   class QuadBracesTagLib extends QuadBracesTagChunk {
     protected $_name   = 'lib';
     protected $_start  = '\{\(';
+    protected $_rstart  = '\=';
     protected $_finish = '\)\}';
     protected $_order  = 4;
   }

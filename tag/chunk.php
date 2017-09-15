@@ -4,6 +4,7 @@
   class QuadBracesTagChunk extends QuadBracesTagPrototype {
     protected $_name   = 'chunk';
     protected $_start  = '\{\{';
+    protected $_rstart = '\$';
     protected $_finish = '\}\}';
     protected $_order  = 2;
 

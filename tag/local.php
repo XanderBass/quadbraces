@@ -4,6 +4,7 @@
   class QuadBracesTagLocal extends QuadBracesTagPrototype {
     protected $_name   = 'local';
     protected $_start  = '\[\+';
+    protected $_rstart = '\+';
     protected $_finish = '\+\]';
     protected $_order  = 1;
 
