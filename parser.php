@@ -137,7 +137,7 @@
       }
       $this->notice = 'common';
       if (!is_null($paths)) $this->paths = $paths;
-      $this->invoke('init');
+      $this->invoke('init',$this);
     }
 
     /* CLASS:GET */
@@ -156,15 +156,15 @@
     function __set($n,$v) {
       switch ($n) {
         case 'data':
-          if ($this->invoke('beforeChangeData',$v)) {
+          if ($this->invoke('beforeChangeData',$v,$this)) {
             $this->_data = QuadBracesLib::megreData($this->_data,$v);
-            $this->invoke('changeData',$v);
+            $this->invoke('changeData',$v,$this);
           }
           return $this->_data;
         case 'settings':
-          if ($this->invoke('beforeChangeSettings',$v)) {
+          if ($this->invoke('beforeChangeSettings',$v,$this)) {
             $this->_settings = QuadBracesLib::megreData($this->_settings,$v);
-            $this->invoke('changeSettings',$v);
+            $this->invoke('changeSettings',$v,$this);
           }
           return $this->_settings;
         case 'loadLanguage':
@@ -181,9 +181,9 @@
           return $this->_maxLevel;
         case 'dictionary':
           if (!is_array($v)) return false;
-          if ($this->invoke('beforeLoadDictionary',$v)) {
+          if ($this->invoke('beforeLoadDictionary',$v,$this)) {
             $this->_dictionary = $v;
-            $this->invoke('loadDictionary',$v);
+            $this->invoke('loadDictionary',$v,$this);
           }
           return $this->_dictionary;
         case 'paths':
@@ -207,7 +207,7 @@
       } elseif (isset($this->_methods[$n])) {
         return call_user_func_array($this->_methods[$n],$p);
       }
-      if (!$this->invoke('methodNotFound')) return false;
+      if (!$this->invoke('methodNotFound',$n,$this)) return false;
       return (!$this->error("method not exists",$n));
     }
 
@@ -219,9 +219,9 @@
     protected function set_language($v) {
       if (!empty($v)) $this->_language = strval($v);
       if ($this->_loadLanguage && class_exists('QuadBracesLang',false))
-        if ($this->invoke('beforeLoadLanguage',$v)) {
+        if ($this->invoke('beforeSetLanguage',$v,$this)) {
           $this->dictionary = QuadBracesLang::load($this->_language);
-          $this->invoke('loadLanguage',$v);
+          $this->invoke('setLanguage',$v,$this);
         }
       return $this->_language;
     }
@@ -252,7 +252,7 @@
     /* Контент */
     protected function set_content($v) {
       $_ = QuadBracesLib::extractData($v,null,$this->_prefix);
-      if ($this->invoke('setContent',$_['body']))
+      if ($this->invoke('setContent',$_['body'],$this))
         $this->variable('content',$_['body']);
       if ($this->_autoTemplate)
         $this->template = empty($_['data']['template']) ? '' : $_['data']['template'];
@@ -263,7 +263,7 @@
     /* Ресурсы */
     protected function set_resources($v) {
       if (!is_array($v)) return false;
-      if ($this->invoke('setResources',$v)) {
+      if ($this->invoke('setResources',$v,$this)) {
         $this->_resources = $v;
         $this->_idx       = array();
         foreach ($this->_resources as $id => $data) {
@@ -294,7 +294,7 @@
           $res  = call_user_func_array($func,$args);
           $ret &= ((strval($res)=='true')||($res===true)||(intval($res)>0));
         } else {
-          if (!$this->invoke('invalidHandler',$e,$args)) break;
+          if (!$this->invoke('invalidHandler',$e,$args,$this)) break;
         }
         if (!$ret) break;
       }
@@ -352,7 +352,8 @@
       @return : string | ключ элемента
     */
     public function parseStart(array $m) {
-      $this->_arguments[$this->_level] = isset($m[8]) ? QuadBracesLib::arguments($m[8]) : array();
+      $this->_arguments[$this->_level] = array();
+      if (!empty($m[8])) $this->_arguments[$this->_level] = QuadBracesLib::arguments($m[8]);
       return $m[1];
     }
 
@@ -421,12 +422,19 @@
       return '';
     }
 
+    /* CLASS:METHOD
+      @description : Установка шаблона
+
+      @param : $n | string | value | | Имя шаблона
+
+      @param : string
+    */
     public function setTemplate($v) {
       if (empty($v)) return $this->invoke('defaultTemplate',$this);
       $content = '[*content*]';
       $this->_templateName = '';
       if ($fn = $this->search('template',$v)) {
-        if ($this->invoke('loadTemplate',$v)) {
+        if ($this->invoke('loadTemplate',$v,$this)) {
           $content = @file_get_contents($fn);
           $this->_templateName = $v;
         }
@@ -435,7 +443,7 @@
           return $this->_template;
       }
       if ($_ = QuadBracesLib::extractFields($content))
-        if ($this->invoke('templateFields',$_)) {
+        if ($this->invoke('templateFields',$_,$this)) {
           $this->_fields = $_['fields'];
           foreach ($this->_fields as $alias => $data) {
             if ($alias == 'content') continue;
@@ -444,7 +452,7 @@
         }
       $content = $_['body'];
       if ($_ = QuadBracesLib::extractData($content,null,$this->_prefix))
-        if ($this->invoke('templateData',$_)) $this->data = $_['data'];
+        if ($this->invoke('templateData',$_,$this)) $this->data = $_['data'];
       $this->_template = $_['body'];
       return $this->_template;
     }
@@ -538,7 +546,10 @@
       if (is_null($_smem))   $_smem   = memory_get_usage();
       $this->_debug['time'] = 0;
       // Каркас обработки
-      if (is_array($data)) $this->_idata = $data;
+      if (is_array($data)) {
+        $this->invoke('beforeLocalParse',$O,$data,$this);
+        $this->_idata = $data;
+      } else { $this->invoke('beforeParse',$O,$this); }
       for ($c1 = 0; $c1 < $p1; $c1++) {
         $this->_level++;
         if ($this->_level <= $this->_maxLevel) {
@@ -553,7 +564,10 @@
         } else { $O = $this->sanitize($O); }
         $this->_level--;
       }
-      if (is_array($data)) $this->_idata = null;
+      if (is_array($data)) {
+        $this->invoke('localParse',$O,$this);
+        $this->_idata = null;
+      } else { $this->invoke('parse',$O,$this); }
       // Финализация
       if ($this->_level == -1) {
         $O = $this->sanitize($O);
