@@ -32,8 +32,7 @@
         case 'args':
           return $this->_owner->arguments[$this->_owner->level];
         case 'regexp':
-          return "#{$this->_start}"
-               . "([\w\.\-]+)(?:\??)"
+          return "#{$this->_start}([\w\.\-]+)(?:\??)"
                . "((:?\:([\w\-\.]+)((\=`([^`]*)`)?))*)"
                . "(((:?\s*)\&([\w\-\.]+)\=`([^`]*)`)*)"
                . "{$this->_finish}#si";
