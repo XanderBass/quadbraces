@@ -72,6 +72,7 @@
    * @property      array $resources
    * @property-read array $idx
    * @property      bool  $SEOStrict
+   * @property      bool  $MODXRevoMode
    */
   class QuadBracesParser {
     const funcRex = '#^([[:alpha:]])(\w+)([[:alpha:]\d])$#si';
@@ -110,9 +111,10 @@
 
     protected $_prefix = 'quadbraces';
 
-    protected $_resources = null;
-    protected $_idx       = null;
-    protected $_SEOStrict = false;
+    protected $_resources    = null;
+    protected $_idx          = null;
+    protected $_SEOStrict    = false;
+    protected $_MODXRevoMode = false;
 
     /* CLASS:CONSTRUCT */
     function __construct($paths=null,$owner=null) {
@@ -168,11 +170,11 @@
           }
           return $this->_settings;
         case 'loadLanguage':
-          $this->_loadLanguage = QuadBracesLib::bool($v);
-          return $this->_loadLanguage;
         case 'autoTemplate':
-          $this->_autoTemplate = QuadBracesLib::bool($v);
-          return $this->_autoTemplate;
+        case 'MODXRevoMode':
+          $P = "_$n";
+          $this->$P = QuadBracesLib::bool($v);
+          return $this->$P;
         case 'prefix':
           $this->_prefix = strval($v);
           return $this->_prefix;

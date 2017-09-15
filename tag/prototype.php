@@ -20,6 +20,10 @@
 
     function __construct(QuadBracesParser $owner) {
       $this->_owner = $owner;
+      if ($this->_owner->MODXRevoMode) {
+        $this->_start  = '\['.$this->_start;
+        $this->_finish = '\]\]';
+      }
       $this->_owner->registerTag($this);
     }
 
