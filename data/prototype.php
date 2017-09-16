@@ -22,7 +22,7 @@
       if ($owner instanceof QuadBracesParser) {
         $this->owner = $owner;
         $this->ready = true;
-        $this->name  = preg_replace('/^QuadBracesTag(\w+)$/si','\1',get_class($this));
+        $this->name  = preg_replace('/^QuadBracesData(\w+)$/si','\1',get_class($this));
         $this->name  = strtolower($this->name);
       }
     }
@@ -71,10 +71,13 @@
       @return : string
     */
     public function regexp() {
-      $T = "#\[\:{$this->name}\@([\w\.\-]+)"
+      $R = $this->owner->MODXRevoMode;
+      $S = $R ? '\[\[\:' : '\[\:';
+      $F = $R ? '\]\]'   : '\:\]';
+      $T = "#{$S}{$this->name}\@([\w\.\-]+)"
          . "((:?\:([\w\-\.]+)((\=`([^`]*)`)?))*)"
          . "(((:?\s*)\&([\w\-\.]+)\=`([^`]*))*)"
-         . "\:\]#si";
+         . "{$F}#si";
       return $T;
     }
 
