@@ -232,12 +232,10 @@
                         элемент body содержит очищенный шаблон,
                         элемент data содержит извлечённые данные
     */
-    public static function extractData($tpl,$def=null,$cln='') {
+    public static function extractData($tpl,$def=null) {
       $TPL = $tpl;
       $out = array('data' => array(),'body' => '');
-      $rex = '#\<\!--(?:\s*)DATA'
-        . (empty($cln) ? '' : '(?:\s+)'.$cln)
-        . '\:\[\+key\+\](?:\s+)`([^`]*)`(?:\s*)--\>#si';
+      $rex = '#\<\!--(?:\s*)DATA\:\[\+key\+\](?:\s+)`([^`]*)`(?:\s*)--\>#si';
       if (is_array($def)) {
         foreach ($def as $key => $val) {
           $t = str_replace('[+key+]',strtolower($key),$rex);

@@ -45,23 +45,21 @@
     public static function load($lang=null,$paths=null) {
       static $_sup    = null;
       static $_pcache = null;
-      if (is_null($_sup))   $_sup = array('caption','hint');
+      if (is_null($_sup))   $_sup = array('caption','description','placeholder');
       if (!is_null($paths)) $_pcache = QuadBracesFiles::paths($paths);
       if (empty($_pcache))  $_pcache = null;
       if (is_null($_pcache)) return false;
       if (is_null($lang))    return false;
 
       $retval = array();
-      $files  = array();
+      $ds     = DIRECTORY_SEPARATOR;
 
       foreach ($_pcache as $path)
-        if ($_ = glob($path.$lang.DIRECTORY_SEPARATOR.'*.lng'))
-          foreach ($_ as $_i) $files[] = $_i;
-      foreach ($files as $f) {
-        $data = file($f);
-        foreach ($data as $s) {
-          $str = trim($s);
-          if (!empty($str)) {
+        if ($_ = glob($path.'lang'.$ds.$lang.$ds.'*.lng')) foreach ($_ as $f) {
+          $data = file($f);
+          foreach ($data as $s) {
+            $str = trim($s);
+            if (empty($str)) continue;
             $a = explode('|',$str);
             $k = trim(array_shift($a));
             foreach ($_sup as $p => $e) {
@@ -71,7 +69,6 @@
             }
           }
         }
-      }
       return $retval;
     }
   }

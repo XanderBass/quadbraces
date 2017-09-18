@@ -68,9 +68,7 @@
       foreach ($paths as $epath) {
         $D = $epath.$sdir.DIRECTORY_SEPARATOR.$dname;
         $fname = $D."$ename.$_x";
-        if (is_file($fname)) {
-          $found = $fname;
-        }
+        if (is_file($fname)) $found = $fname;
         if ($lang != '') {
           $fname = $D.$lang.DIRECTORY_SEPARATOR."$ename.$_x";
           if (is_file($fname)) $found = $fname;

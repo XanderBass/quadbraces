@@ -35,20 +35,23 @@
   /* CLASS ~BEGIN @string : Обработанные данные */
   /**
    * Class QuadBracesParser
-   * @property      object $owner
+   * @property-read object $owner
+   * @property-read array  $events
+   * @property-read array  $methods
    *
    * @property      array $paths
+   * @property-read array $fields
    * @property      array $data
-   * @property      array $idata
-   * @property      array $fields
+   * @property-read array $idata
    * @property      array $settings
    * @property-read array $debug
    *
    * @property-read array $chunks
    * @property-read array $strings
    *
-   * @property      string $language
-   * @property      array  $dictionary
+   * @property string $language
+   * @property bool   $loadLanguage
+   * @property array  $dictionary
    *
    * @property-read int   $maxLevel
    * @property-read int   $level
@@ -61,6 +64,7 @@
    * @property      bool   $autoTemplate
    *
    * @property-read array $tags
+   * @property-read array $tagsSort
    * @property-read array $tagsExts
    *
    * @property string $prefix
@@ -190,6 +194,7 @@
           return $this->_dictionary;
         case 'paths':
           $this->_paths = QuadBracesFiles::paths($v);
+          if (class_exists('QuadBracesLang',false)) QuadBracesLang::load(null,$v);
           return $this->_paths;
         case 'startTime': case 'startRAM':
           $k = $n == 'startTime' ? 'time' : 'ram';
@@ -238,7 +243,7 @@
       if (!is_int($v) && !is_numeric($v)) {
         switch ($v) {
           case 'strict': $this->_notice = $_tagKeys; break;
-          case 'common': $this->_notice = array('chunk','string','lib','snippet','custom'); break;
+          case 'common': $this->_notice = array('chunk','string','lib','snippet','snippetc'); break;
           default:
             $this->_notice = array();
             $TMP = is_array($v) ? $v : explode(',',$v);
@@ -253,7 +258,7 @@
 
     /* Контент */
     protected function set_content($v) {
-      $_ = QuadBracesLib::extractData($v,null,$this->_prefix);
+      $_ = QuadBracesLib::extractData($v,null);
       if ($this->invoke('setContent',$_['body'],$this))
         $this->variable('content',$_['body']);
       if ($this->_autoTemplate)
@@ -312,6 +317,7 @@
       } else { array_unshift($this->_tagsSort,$to->name); }
       $this->_tags[$to->name]     = $to->regexp;
       $this->_tagsExts[$to->name] = $to;
+      return $this->_tagsExts[$to->name];
     }
 
     /* CLASS:METHOD
@@ -453,7 +459,7 @@
           }
         }
       $content = $_['body'];
-      if ($_ = QuadBracesLib::extractData($content,null,$this->_prefix))
+      if ($_ = QuadBracesLib::extractData($content,null))
         if ($this->invoke('templateData',$_,$this)) $this->data = $_['data'];
       $this->_template = $_['body'];
       return $this->_template;

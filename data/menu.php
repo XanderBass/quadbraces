@@ -14,69 +14,72 @@
     public function main($key,$value,$args) {
       if (!is_array($value)) return strval($value);
       // Параметры обработки
-      $lk = false; $lp = ''; $ml = 0;
-      if (isset($args['langKeys']))   $lk = QuadBracesLib::bool($args['langKeys']);
-      if (isset($args['langPrefix'])) $lp = $args['langPrefix'];
-      if (isset($args['maxLevel']))   $ml = intval($args['maxLevel']);
+      $rm = $this->owner->MODXRevoMode;
+      $ml = isset($args['maxLevel']) ? intval($args['maxLevel']) : 0;
       // Chunk type
-      $tplt = 'chunk';
+      $TT = 'chunk';
       if (isset($args['chunkType']))
-        if (in_array($args['chunkType'],array('chunk','string','lib'))) $tplt = $args['chunkType'];
+        if (in_array($args['chunkType'],array('string','lib'))) $TT = $args['chunkType'];
+      switch ($TT) {
+        case 'string': $bs = $rm ? '[[-' : '{['; $be = $rm ? ']]' : ']}'; break;
+        case 'lib'   : $bs = $rm ? '[[=' : '{('; $be = $rm ? ']]' : ')}'; break;
+        default      : $bs = $rm ? '[[$' : '{{'; $be = $rm ? ']]' : '}}'; break;
+      }
+      $pb = $rm ? '[[+' : '[+';
+      $pe = $rm ? ']]'  : '+]';
       // Item
-      $tpli = '';
-      if (isset($args['chunk'])) {
-        $a = '&key=`[+key+]` &value=`[+value+]` &children=`[+children+]`';
-        switch ($tplt) {
-          case 'string': $tpli = '{['.$args['chunk']." [+arguments+] $a]}"; break;
-          case 'lib'   : $tpli = '{('.$args['chunk']." [+arguments+] $a)}"; break;
-          default      : $tpli = '{{'.$args['chunk']." [+arguments+] $a}}"; break;
-        }
-      }
-      if (empty($tpli)) return '';
+      $TI = <<<html
+<li><a href="{$pb}url{$pe}">{$pb}title{$pe}</a>{$pb}children{$pe}</li>
+html;
+      if (isset($args['item'])) $TI = "{$bs}{$args['item']} [+args+]{$be}";
       // Wrapper
-      $tplw = '';
-      if (isset($args['outer'])) {
-        $a = '&items=`[+items+]` &level=`[+level+]`';
-        switch ($tplt) {
-          case 'string': $tplw = '{['.$args['outer']." $a]}"; break;
-          case 'lib'   : $tplw = '{('.$args['outer']." $a)}"; break;
-          default      : $tplw = '{{'.$args['outer']." $a}}"; break;
-        }
-      }
-      return $this->_menu_($value,$tpli,$tplw,$lk,$lp,1,$ml);
+      $TW = <<<html
+<ul class="level-[+level+]">
+[+items+]
+</ul>
+html;
+      if (isset($args['outer']))
+        $TW = "{$bs}{$args['outer']}"
+            . " &items=`[+items+]` &level=`[+level+]`"
+            . "{$be}";
+      return $this->_menu_($value,$TI,$TW,1,$ml);
     }
 
-    protected function _menu_($value,$tpli,$tplw,$lk,$lp,$level=1,$ml=0) {
+    protected function _menu_($data,$TI,$TW,$level=1,$ml=0) {
+      static $rm = null;
+      if (is_null($rm)) $rm = $this->owner->MODXRevoMode;
+      $pb = $rm ? '[[+' : '[+';
+      $pe = $rm ? ']]'  : '+]';
       $v = array();
-      foreach ($value as $key => $val) {
-        $dk = $lk ? "[%".(!empty($lp) ? $lp."." : "")."$key%]" : $key;
-        $dv = ''; $ch = array('','',''); $ar = array();
-        if (is_array($val)) {
-          foreach ($val as $vKey => $vVal) {
-            $ar[] = "&".$vKey."=`$vVal`";
-            if (is_array($vVal))
-              if (in_array($vKey,array('before','children','after')))
-                if (($ml == 0) || ($level < $ml)) {
-                  $lf = (!empty($lp) ? $lp."." : "").$key;
-                  $ck      = $vKey == 'children' ? 1 : ($vKey == 'before' ? 0 : 2);
-                  $ch[$ck] = $this->_menu_($vVal,$tpli,$tplw,$lk,$lf,$level+1,$ml);
-                }
+      foreach ($data as $id => $item) {
+        if (!is_array($item)) continue;
+        $ch = array('','','');
+        $ar = array("&id=`{$id}`");
+        $t_ = $TI;
+        foreach ($item as $key => $val) {
+          if (is_array($val)) {
+            if (in_array($key,array('before','children','after'))) {
+              if (($level >= $ml) && ($ml != 0)) continue;
+              $ck      = $key == 'children' ? 1 : ($key == 'before' ? 0 : 2);
+              $ch[$ck] = $this->_menu_($val,$TI,$TW,$level+1,$ml);
+            }
+          } else {
+            $ar[] = "&{$key}=`{$val}`";
+            $t_ = str_replace($pb.$key.$pe,$val,$t_);
           }
-        } else { $dv = $val; }
+        }
         $v[] = str_replace(array(
-          '[+arguments+]',
-          '[+key+]',
-          '[+value+]',
-          '[+children+]'
-        ),array(implode(' ',$ar),$dk,$dv,implode('',$ch)),$tpli);
+          '[+args+]','[+id+]','[+children+]'
+        ),array(
+          implode(' ',$ar),$id,implode('',$ch)
+        ),$t_);
       }
       $v = implode('',$v);
       $v = $this->owner->parse(str_replace(array(
         '[+items+]','[+level+]'
       ),array(
-        $this->owner->parse($v),
-        $level
-      ),empty($tplw) ? '<ul>[+items+]</ul>' : $tplw));
+        $this->owner->parse($v),$level
+      ),$TW));
       return $v;
     }
   }
