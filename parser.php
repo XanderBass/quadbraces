@@ -7,7 +7,7 @@
    * не устанавливать MODX для целевых страниц. Также предназначен в качестве
    * унифицированного стандарта шаблонизации.
    *
-   * @version 3.0.0
+   * @version 3.0.1
    * @author  Xander Bass
    */
 
@@ -165,17 +165,29 @@
           if ($this->invoke('beforeChangeData',$v,$this)) {
             $this->_data = QuadBracesLib::megreData($this->_data,$v);
             $this->invoke('changeData',$v,$this);
+            if (isset($v['template'])) $this->setTemplate($v['template']);
+            if (isset($v['content'])) $this->set_content($v['content']);
           }
           return $this->_data;
         case 'settings':
           if ($this->invoke('beforeChangeSettings',$v,$this)) {
             $this->_settings = QuadBracesLib::megreData($this->_settings,$v);
             $this->invoke('changeSettings',$v,$this);
+            if (@is_array($v['parser'])) {
+              foreach (array(
+                'load_language' => 'loadLanguage',
+                'auto_template' => 'autoTemplate',
+                'revo_syntax'   => 'MODXRevoMode',
+                'seo_strict'    => 'SEOStrict'
+              ) as $s => $p)
+              if (isset($v['parser'][$s])) $this->$p = QuadBracesLib::bool($v['parser'][$s]);
+            }
           }
           return $this->_settings;
         case 'loadLanguage':
         case 'autoTemplate':
         case 'MODXRevoMode':
+        case 'SEOStrict':
           $P = "_$n";
           $this->$P = QuadBracesLib::bool($v);
           return $this->$P;
@@ -438,7 +450,7 @@
       @param : string
     */
     public function setTemplate($v) {
-      if (empty($v)) return $this->invoke('defaultTemplate',$this);
+      if (empty($v)) if (!$this->invoke('defaultTemplate',$this)) return '';
       $content = '[*content*]';
       $this->_templateName = '';
       if ($fn = $this->search('template',$v)) {
