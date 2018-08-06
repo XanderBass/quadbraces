@@ -142,7 +142,11 @@
         }
       }
       $this->notice = 'common';
-      if (!is_null($paths)) $this->paths = $paths;
+      if (is_null($paths)) {
+        $this->paths = dirname(__FILE__).DIRECTORY_SEPARATOR.'content'.DIRECTORY_SEPARATOR;
+      } else {
+        $this->paths = $paths;
+      }
       $this->invoke('init',$this);
     }
 
