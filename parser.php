@@ -194,6 +194,9 @@
         case 'SEOStrict':
           $P = "_$n";
           $this->$P = QuadBracesLib::bool($v);
+          $ds = DIRECTORY_SEPARATOR;
+          if (($n == 'loadLanguage') && (!class_exists('QuadBracesLang',false)))
+            require dirname(__FILE__).$ds.'lib'.$ds.'lang.php';
           return $this->$P;
         case 'prefix':
           $this->_prefix = strval($v);
